@@ -17,9 +17,10 @@ defmodule InsiderTrading.Application do
       # Start Finch
       {Finch, name: InsiderTrading.Finch},
       # Start the Endpoint (http/https)
-      InsiderTradingWeb.Endpoint
+      InsiderTradingWeb.Endpoint,
       # Start a worker by calling: InsiderTrading.Worker.start_link(arg)
       # {InsiderTrading.Worker, arg}
+      InsiderTrading.Scheduler
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
