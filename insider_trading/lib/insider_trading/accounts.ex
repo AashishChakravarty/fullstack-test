@@ -4,7 +4,8 @@ defmodule InsiderTrading.Accounts do
   """
 
   import Ecto.Query, warn: false
-  alias Hex.Repo
+  import InsiderTrading.Helpers.Common
+
   alias InsiderTrading.Repo
 
   alias InsiderTrading.Accounts.Company
@@ -109,6 +110,58 @@ defmodule InsiderTrading.Accounts do
       limit: ^limit
     )
     |> Repo.all()
+  end
+
+  def filter_company_by_search(search) do
+    if String.trim(search) == "" do
+      true
+    else
+      dynamic(
+        [company],
+        ilike(
+          fragment(
+            "CONCAT((?), ' ',(?), ' ',(?), ' ',(?))",
+            company.name,
+            company.cik,
+            company.ticker,
+            company.exchange
+          ),
+          ^"%#{String.trim(search)}%"
+        )
+      )
+    end
+  end
+
+  def get_company_list(params) do
+    page = Map.get(params, "page", "1") |> String.to_integer()
+    limit = Map.get(params, "limit", "10") |> String.to_integer()
+    search = Map.get(params, "search", "")
+    sortby = Map.get(params, "sortby", "id")
+    direction = Map.get(params, "direction", "asc")
+
+    search_string = filter_company_by_search(search)
+
+    query =
+      from(company in Company)
+
+    query =
+      query
+      |> where(^search_string)
+
+    data_query =
+      query
+      |> add_order_by(sortby, direction)
+      |> add_offset_query(page, limit)
+      |> add_limit_query(limit)
+
+    count_query =
+      query
+      |> select([company], count(company.id))
+
+    data = Repo.all(data_query)
+    count = Repo.one(count_query)
+
+    {data, count}
   end
 
   def get_company_by_cik(cik, ticker) do

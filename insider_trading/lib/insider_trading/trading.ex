@@ -4,6 +4,8 @@ defmodule InsiderTrading.Trading do
   """
 
   import Ecto.Query, warn: false
+  import InsiderTrading.Helpers.Common
+
   alias InsiderTrading.Repo
 
   alias InsiderTrading.Trading.Transaction
@@ -100,5 +102,60 @@ defmodule InsiderTrading.Trading do
   """
   def change_transaction(%Transaction{} = transaction, attrs \\ %{}) do
     Transaction.changeset(transaction, attrs)
+  end
+
+  def filter_transaction_by_search(search) do
+    if String.trim(search) == "" do
+      true
+    else
+      dynamic(
+        [transaction],
+        ilike(
+          fragment(
+            "CONCAT((?), ' ',(?), ' ',(?), ' ',(?), ' ',(?))",
+            transaction.name,
+            transaction.job_title,
+            transaction.start_date,
+            transaction.shares,
+            transaction.amount
+          ),
+          ^"%#{String.trim(search)}%"
+        )
+      )
+    end
+  end
+
+  def get_transactions_by_company_id(company_id, params) do
+    page = Map.get(params, "page", "1") |> String.to_integer()
+    limit = Map.get(params, "limit", "10") |> String.to_integer()
+    search = Map.get(params, "search", "")
+    sortby = Map.get(params, "sortby", "id")
+    direction = Map.get(params, "direction", "asc")
+
+    search_string = filter_transaction_by_search(search)
+
+    query =
+      from(transaction in Transaction,
+        where: transaction.company_id == ^company_id
+      )
+
+    query =
+      query
+      |> where(^search_string)
+
+    data_query =
+      query
+      |> add_order_by(sortby, direction)
+      |> add_offset_query(page, limit)
+      |> add_limit_query(limit)
+
+    count_query =
+      query
+      |> select([transaction], count(transaction.id))
+
+    data = Repo.all(data_query)
+    count = Repo.one(count_query)
+
+    {data, count}
   end
 end

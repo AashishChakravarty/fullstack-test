@@ -51,7 +51,8 @@ defmodule InsiderTrading.MixProject do
       {:jason, "~> 1.2"},
       {:plug_cowboy, "~> 2.5"},
       {:httpoison, "~> 2.0"},
-      {:quantum, "~> 3.0"}
+      {:quantum, "~> 3.0"},
+      {:cors_plug, "~> 3.0"}
     ]
   end
 

@@ -20,10 +20,12 @@ defmodule InsiderTradingWeb.Router do
     get "/", PageController, :home
   end
 
-  # Other scopes may use custom stacks.
-  # scope "/api", InsiderTradingWeb do
-  #   pipe_through :api
-  # end
+  scope "/api", InsiderTradingWeb do
+    pipe_through :api
+
+    get "/company_list", CompanyController, :index
+    get "/transactions/:company_id", CompanyController, :show
+  end
 
   # Enable LiveDashboard and Swoosh mailbox preview in development
   if Application.compile_env(:insider_trading, :dev_routes) do
